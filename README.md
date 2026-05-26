@@ -75,15 +75,6 @@ streamlit run frontend.py
 
 ---
 
-## 📊 Evaluation Focus
-
-* End-to-end working system (40%)
-* Architecture + code quality (30%)
-* UI/UX + configurability (20%)
-* Documentation (10%)
-
----
-
 ## 🧩 Notes
 
 * LangChain allows breaking the system into:
@@ -93,9 +84,3 @@ streamlit run frontend.py
     Chains / Agents (decision logic)
 * System must run locally with a single setup command
 * Async agent communication is required
-
----
-
-## ✨ Author
-
-Built for AI Engineer Hiring Challenge · Yuno AI Team
