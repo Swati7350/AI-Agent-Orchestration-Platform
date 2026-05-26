@@ -44,7 +44,6 @@ This platform allows users to:
 conda create -n agent_env python=3.10 -y
 conda activate agent_env
 pip install -r requirements.txt
-pip install pipfile
 ```
 
 Create `.env` file:
