@@ -129,7 +129,6 @@ with st.sidebar:
                         key=f"prompt_{name}"
                     )
 
-
 # ===================================
 # SIDEBAR → MANAGE AGENTS
 # ===================================
