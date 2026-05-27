@@ -27,7 +27,6 @@ groq_llm=ChatGroq(model="llama-3.3-70b-versatile")
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages.ai import AIMessage
 
-
 # search_tool = TavilySearchResults(max_results=2)
 
 # DEFAULT_SYSTEM_PROMPT = "Act as an AI chatbot who is smart and friendly"
