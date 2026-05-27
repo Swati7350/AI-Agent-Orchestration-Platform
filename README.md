@@ -76,12 +76,12 @@ streamlit run frontend.py
 ## 🧩 Notes
 
 * LangChain allows breaking the system into:
-    Tools (WhatsApp sender, search, etc.)
-    Prompts (agent behavior definitions)
-    Memory (conversation history)
-    Chains / Agents (decision logic)
+    -- Tools (WhatsApp sender, search, etc.)
+    -- Prompts (agent behavior definitions)
+    -- Memory (conversation history)
+    -- Chains / Agents (decision logic)
 * System must run locally with a single setup command
 * Async agent communication is required
 
 ## 🧩 High Level Architechture
-![Uploading image.png…]()
+<img width="1536" height="1024" alt="High Level Architechture Diagram" src="https://github.com/user-attachments/assets/7bb6564e-c9db-41ef-bf18-a9548429892c" />
