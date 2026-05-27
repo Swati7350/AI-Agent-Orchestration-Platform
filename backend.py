@@ -16,7 +16,6 @@ class RequestState(BaseModel):
     messages: List[str]
     allow_search: bool
 
-
 #Step2: Setup AI Agent from FrontEnd Request
 from fastapi import FastAPI
 from ai_agent import get_response_from_ai_agent
