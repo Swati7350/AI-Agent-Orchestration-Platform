@@ -23,7 +23,6 @@ This platform allows users to:
 * 🧠 Memory + message history persistence
 * ⚙️ Configurable behavior (rules, schedules, guardrails)
 * 💬 External messaging integration (WhatsApp/Telegram/Slack)
-* 📊 Real-time logs + monitoring dashboard
 * 🔄 Async agent-to-agent communication
 
 ---
@@ -83,3 +82,6 @@ streamlit run frontend.py
     Chains / Agents (decision logic)
 * System must run locally with a single setup command
 * Async agent communication is required
+
+## 🧩 High Level Architechture
+![Uploading image.png…]()
