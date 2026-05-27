@@ -24,10 +24,21 @@ st.set_page_config(
     page_title="LangGraph Agent UI",
     layout="wide"
 )
+# ===================================
+# NEW CHAT
+# ===================================
+def create_new_chat():
+    chat_id = f"chat_{len(st.session_state.chats) + 1}"
+    st.session_state.chats[chat_id] = []
+    st.session_state.current_chat = chat_id
 
+def switch_chat(chat_id):
+    st.session_state.current_chat = chat_id
+    st.session_state.active_agent = None
 # ===================================
 # SESSION STATE
 # ===================================
+
 if "agents" not in st.session_state:
     st.session_state.agents = load_agents()
 
@@ -37,7 +48,6 @@ if "show_agents" not in st.session_state:
 if "show_manage_agents" not in st.session_state:
     st.session_state.show_manage_agents = False
 
-# restore chat on reload
 if "messages" not in st.session_state:
     st.session_state.messages = load_chat_history()
 
@@ -47,6 +57,31 @@ if "active_agent" not in st.session_state:
 if "show_whatsapp" not in st.session_state:
     st.session_state.show_whatsapp = False
 
+if "chats" not in st.session_state:
+    st.session_state.chats = load_chat_history()
+
+if not isinstance(st.session_state.chats, dict):
+    st.session_state.chats = {}
+
+if "current_chat" not in st.session_state:
+
+    if st.session_state.chats:
+        # always open latest chat
+        latest_chat = list(
+            st.session_state.chats.keys()
+        )[-1]
+
+        st.session_state.current_chat = (
+            latest_chat
+        )
+
+    else:
+        st.session_state.current_chat = (
+            "chat_1"
+        )
+
+if "chat_1" not in st.session_state.chats:
+    st.session_state.chats["chat_1"] = []
 # ===================================
 # SIDEBAR → VIEW AGENTS
 # ===================================
@@ -190,7 +225,7 @@ with st.sidebar:
 # ===================================
 # MAIN LAYOUT
 # ===================================
-left_col, right_col = st.columns([7, 3])
+left_col, right_col = st.columns([6, 4])
 
 
 # ===================================
@@ -342,27 +377,65 @@ with left_col:
                         ]
                     )
 
-
+def toggle_chats():
+    st.session_state.show_chats = (
+        not st.session_state.show_chats
+    )
 # ===================================
 # RIGHT → CHAT
 # ===================================
 with right_col:
+    
+    header_left, header_right = st.columns([5, 3])
 
+    with header_right:
+        st.button("➕ New Chat", on_click=create_new_chat)
+        st.button(
+                "📂 View Chat History",
+                on_click=toggle_chats
+            )
+        if "show_chats" not in st.session_state:
+            st.session_state.show_chats = False
+        if st.session_state.show_chats:
+
+                chat_ids = list(st.session_state.chats.keys())[-5:]
+
+                for chat_id in reversed(chat_ids):
+
+                    is_active = chat_id == st.session_state.current_chat
+                    label = f"👉 {chat_id}"
+
+                    st.button(
+                        label,
+                        key=f"chat_{chat_id}",
+                        on_click=switch_chat,
+                        args=(chat_id,),
+                        use_container_width=True
+                    )
     st.subheader(
         "💬 Chat With Agent"
     )
+    
+    current_chat = st.session_state.current_chat
+    if current_chat not in st.session_state.chats:
+        st.session_state.chats[current_chat] = []
 
-    # render old messages
-    for msg in st.session_state.messages:
+    for msg in st.session_state.chats[current_chat]:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
+
 
     user_message = st.chat_input(
         "Message agent..."
     )
-
+    
     if user_message:
 
+        # 1. store user message
+        st.session_state.chats[current_chat].append({
+            "role": "user",
+            "content": user_message
+        })
         llm = ChatGroq(
             model="llama-3.3-70b-versatile"
         )
@@ -371,11 +444,18 @@ with right_col:
 
         if st.session_state.active_agent is None:
 
-            agent_name = route_agent(
-                user_message,
-                llm,
-                agents
-            )
+            agent_name = route_agent(user_message, llm, agents)
+
+            if agent_name is None or agent_name not in agents:
+
+                st.warning("⚠️ No related agent found for your query.")
+
+                st.session_state.chats[st.session_state.current_chat].append({
+                    "role": "assistant",
+                    "content": "⚠️ Sorry, no suitable agent found for your request. Please create an agent or refine your query."
+                })
+
+                st.rerun()
 
             st.session_state.active_agent = (
                 agent_name
@@ -384,54 +464,35 @@ with right_col:
         agent = agents[
             st.session_state.active_agent
         ]
-
-        st.session_state.messages.append({
-            "role": "user",
-            "content": user_message
-        })
-
-        save_chat_history(
-            st.session_state.messages
-        )
-
-        # FIXED
+    # 3. generate response
         response = run_agent(
             agent,
             user_message,
             llm,
-            st.session_state.messages[:-1]
+            st.session_state.chats[current_chat]
         )
-
-        st.session_state.messages.append({
+         # 4. store assistant message
+        st.session_state.chats[current_chat].append({
             "role": "assistant",
             "content": response
         })
-
+        save_chat_history(st.session_state.chats)
         # trigger whatsapp UI
         if "whatsapp" in response.lower():
             st.session_state.show_whatsapp = True
 
-        save_chat_history(
-            st.session_state.messages
-        )
-
         st.rerun()
-
-    # ===================================
-    # WHATSAPP SHARE UI
-    # ===================================
-    # ===================================
-# WHATSAPP SHARE
-# ===================================
 st.divider()
 
 st.markdown("### 📲 Share Discussion")
+
 st.info(
     "Send your finalized details to WhatsApp.\n\n"
     "✔ Enter 10-digit mobile number (India)\n\n"
     "✔ Or include country code (+91XXXXXXXXXX)\n\n"
     "✔ Click send to receive your discussion instantly"
 )
+
 phone = st.text_input(
     "WhatsApp Number",
     placeholder="9876543210"
@@ -440,32 +501,31 @@ phone = st.text_input(
 if st.button("🟢 Send via WhatsApp"):
 
     if not phone.strip():
-        st.warning(
-            "Enter phone number"
-        )
-
-    elif len(st.session_state.messages) < 2:
-        st.warning(
-            "No itinerary found."
-        )
+        st.warning("Enter phone number")
 
     else:
 
-        # latest assistant response
+        # 🔍 safely extract last assistant message
         itinerary = None
 
-        for msg in reversed(
-            st.session_state.messages
-        ):
-            if msg["role"] == "assistant":
-                itinerary = msg["content"]
-                break
+        messages = st.session_state.chats[st.session_state.current_chat]
 
-        send_whatsapp_message(
-            phone,
-            itinerary
-        )
+        if isinstance(messages, list):
 
-        st.success(
-            "Travel plan sent on WhatsApp!"
-        )
+            for msg in reversed(messages):
+
+                if isinstance(msg, dict) and msg.get("role") == "assistant":
+                    itinerary = msg.get("content")
+                    break
+
+        # 🚨 guard check
+        if not itinerary:
+            st.warning("No valid assistant response found to send.")
+        
+        else:
+            try:
+                send_whatsapp_message(phone, str(itinerary))
+                st.success("Travel plan sent on WhatsApp!")
+            
+            except Exception as e:
+                st.error(f"Failed to send WhatsApp message: {e}")
